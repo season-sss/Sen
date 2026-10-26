@@ -39,7 +39,7 @@ const B_IRREGULAR_O = new Set(['돕다', '곱다']);
 const B_IRREGULAR = new Set([
   '춥다', '덥다', '쉽다', '어렵다', '가깝다', '무겁다', '가볍다', '맵다', '귀엽다', '아름답다', '반갑다', '고맙다',
   '즐겁다', '외롭다', '부럽다', '새롭다', '시끄럽다', '부드럽다', '더럽다', '두껍다', '차갑다', '뜨겁다', '싱겁다',
-  '눕다', '굽다', '줍다', '밉다', '무섭다', '아깝다', '간지럽다', '그립다', '괴롭다', '가렵다', '서럽다', '날카롭다',
+  '눕다', '굽다', '줍다', '밉다', '무섭다', '아깝다', '간지럽다', '그립다', '괴롭다', '가렵다', '서럽다', '날카롭다', '부끄럽다', '어둡다', '아쉽다', '어지럽다',
   '사납다', '까다롭다', '번거롭다', '해롭다', '이롭다', '안타깝다', '답답하다', '미덥다', '우습다', '징그럽다', '어지럽다',
 ]);
 const B_REGULAR = new Set(['입다', '잡다', '좁다', '씹다', '뽑다', '업다', '접다', '집다', '수줍다', '꼽다', '붙잡다', '굽히다', '갈아입다', '뒤집다']);
@@ -50,6 +50,7 @@ const S_REGULAR = new Set(['웃다', '씻다', '벗다', '빼앗다', '솟다', 
 const REU_EU = new Set(['따르다', '치르다', '들르다', '우러르다', '다다르다']);
 const REU_REO = new Set(['푸르다']);
 
+const H_IRREGULAR = new Set(['빨갛다', '파랗다', '노랗다', '하얗다', '까맣다', '동그랗다', '그렇다', '어떻다', '이렇다', '저렇다', '커다랗다', '조그맣다', '말갛다', '누렇다', '시퍼렇다', '새빨갛다']);
 const H_REGULAR = new Set(['좋다', '놓다', '넣다', '낳다', '닿다', '쌓다', '찧다', '빻다', '내놓다', '내려놓다']);
 
 /** Words whose meaning differs by conjugation class. */
@@ -80,7 +81,7 @@ export function classify(dictionaryForm: string, pos: PartOfSpeech): Classificat
     if (REU_EU.has(dictionaryForm)) return { irregular: 'eu', confidence: 'verified', note };
     if (REU_REO.has(dictionaryForm)) return { irregular: 'reo', confidence: 'verified', note };
     // 르 불규칙 is the overwhelmingly common pattern, but exceptions exist.
-    const known = ['모르다', '부르다', '빠르다', '고르다', '다르다', '자르다', '마르다', '오르다', '흐르다', '기르다', '서두르다', '누르다', '게으르다', '바르다', '구르다', '나르다', '조르다', '찌르다', '들어오르다', '이르다'];
+    const known = ['모르다', '부르다', '빠르다', '고르다', '다르다', '자르다', '마르다', '오르다', '흐르다', '기르다', '서두르다', '누르다', '배부르다', '목마르다', '머무르다', '가르다', '짓누르다', '게으르다', '바르다', '구르다', '나르다', '조르다', '찌르다', '들어오르다', '이르다'];
     return { irregular: 'reu', confidence: known.includes(dictionaryForm) ? 'verified' : 'inferred', note };
   }
 
@@ -109,6 +110,7 @@ export function classify(dictionaryForm: string, pos: PartOfSpeech): Classificat
       return { irregular: 'regular', confidence: 'uncertain', note: 'คำที่ลงท้าย ㅅ อาจผันแบบปกติ (웃어요) หรือ ㅅ 불규칙 (지어요) — โปรดตรวจสอบ' };
     case 'ㅎ':
       if (H_REGULAR.has(dictionaryForm)) return { irregular: 'regular', confidence: 'verified', note };
+      if (H_IRREGULAR.has(dictionaryForm)) return { irregular: 'h', confidence: 'verified', note };
       if (pos === 'adjective') return { irregular: 'h', confidence: 'inferred', note };
       return { irregular: 'regular', confidence: 'inferred', note };
     default:

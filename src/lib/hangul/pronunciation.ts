@@ -199,7 +199,7 @@ function pronounceWord(word: string, opts: Required<PronounceOptions>, rules: Se
     if (F === 'ㄺ' && next.i === 'ㄱ') n = 'ㄹ'; // 읽고 [일꼬]
     if (F === 'ㄼ' && word.startsWith('밟')) n = 'ㅂ'; // 밟다 [밥따]
     if (n !== F) rules.add('neutralization');
-    const stemTense = (F === 'ㄵ' || F === 'ㄻ') && TENSE[next.i]; // 앉다 [안따], 젊다 [점따]
+    const stemTense = ['ㄵ', 'ㄻ', 'ㄼ', 'ㄾ'].includes(F) && TENSE[next.i]; // 앉다 [안따], 젊다 [점따], 짧다 [짤따]
     const lFromComplex = F === 'ㄺ' && next.i === 'ㄱ';
     cur.f = n;
 
