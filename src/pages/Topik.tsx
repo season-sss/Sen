@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Headphones, FileText, PenLine, Play, RotateCcw, ExternalLink, BookOpen, BookMarked, AlertTriangle } from 'lucide-react';
+import { Clock, Headphones, FileText, PenLine, Play, RotateCcw, ExternalLink, BookOpen, BookMarked, AlertTriangle, ScrollText, ChevronRight } from 'lucide-react';
 import { PageHeader, Card, CardHeader } from '@/components/ui/Card';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
@@ -10,6 +10,8 @@ import { QuizRunner, type QuizResult } from '@/components/learn/QuizRunner';
 import { TOPIK1_LISTENING, TOPIK1_READING } from '@/data/topik/topik1';
 import { TOPIK2_LISTENING, TOPIK2_READING, TOPIK2_WRITING } from '@/data/topik/topik2';
 import { TRACK3_DISCLAIMER, TRACK3_QUESTIONS } from '@/data/topik/track3';
+import { REAL_EXAMS } from '@/data/topik/real/topik96';
+import { useExamDraft } from '@/store/history';
 import { GRAMMAR } from '@/data/grammar';
 import { VOCABULARY } from '@/data/vocabulary';
 import type { Question } from '@/lib/quiz/types';
@@ -63,7 +65,9 @@ export default function Topik() {
   const b = bank(exam);
 
   const topikMistakes = useMemo(() => Object.values(mistakes).filter((m) => m.source.startsWith(`topik:${exam}`)).map((m) => m.question), [mistakes, exam]);
-  const myAttempts = attempts.filter((a) => a.exam === exam).slice().reverse();
+  const myAttempts = attempts.filter((a) => a.exam === exam || (exam === 'TOPIK1' && a.exam === 'REAL')).slice().reverse();
+  const draft = useExamDraft((s) => s.draft);
+  const realExams = REAL_EXAMS.filter((e) => (exam === 'TOPIK1' ? e.level === 'TOPIK I' : exam === 'TOPIK2' ? e.level === 'TOPIK II' : false));
 
   const start = (cfg: RunConfig) => setRun({ ...cfg, seed: randomSeed() });
 
@@ -179,7 +183,7 @@ export default function Topik() {
 
   return (
     <div>
-      <PageHeader title="TOPIK Center" subtitle="ฝึกข้อสอบรูปแบบ TOPIK ด้วยข้อสอบที่เขียนขึ้นใหม่ — ไม่ใช่ข้อสอบจริงจากการสอบที่ผ่านมา" />
+      <PageHeader title="TOPIK Center" subtitle="ข้อสอบจริงจากการสอบที่ผ่านมา (ระบุที่มาชัดเจน) และคลังข้อสอบรูปแบบ TOPIK ที่ HANEUL เขียนขึ้นใหม่" />
       <Tabs
         className="mb-5"
         value={exam}
@@ -198,6 +202,32 @@ export default function Topik() {
         </Notice>
       )}
 
+      {realExams.length > 0 && (
+        <div className="mb-5 grid gap-3 sm:grid-cols-2">
+          {realExams.map((e) => {
+            const inProgress = draft?.examId === e.id;
+            return (
+              <Link key={e.id} to={`/topik/real/${e.id}`} className="card group flex items-center gap-4 border-lavender/40 bg-gradient-to-br from-lavender-soft to-sky-soft p-4 transition hover:shadow-lift">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-navy text-white dark:bg-lavender dark:text-bg">
+                  <ScrollText className="h-6 w-6" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold">{e.titleTh}</span>
+                    <Badge tone="lavender">ข้อสอบจริง</Badge>
+                    {inProgress && <Badge tone="warning">ทำค้างไว้</Badge>}
+                  </div>
+                  <div className="truncate text-sm text-muted" lang="ko">
+                    {e.title} · {e.questions.length} ข้อ · {e.sections.listening.minutes + e.sections.reading.minutes} นาที · มีเฉลยภาษาไทย
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-muted transition group-hover:translate-x-0.5" />
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       <div className="mb-5 grid gap-4 lg:grid-cols-3">
         <Card className="card-pad lg:col-span-2">
           <CardHeader title={INFO[exam].title} subtitle={INFO[exam].levels} />
@@ -209,7 +239,7 @@ export default function Topik() {
             ))}
           </ul>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
-            <Badge>คลังข้อสอบ: ฟัง {b.listening.length} · อ่าน {b.reading.length}{b.writing.length ? ` · เขียน ${b.writing.length}` : ''} ข้อ</Badge>
+            <Badge>คลังข้อสอบที่เขียนขึ้นใหม่: ฟัง {b.listening.length} · อ่าน {b.reading.length}{b.writing.length ? ` · เขียน ${b.writing.length}` : ''} ข้อ</Badge>
             {exam !== 'TRACK3' && (
               <a className="inline-flex items-center gap-1 text-lavender hover:underline" href="https://www.topik.go.kr" target="_blank" rel="noreferrer">
                 ตรวจสอบข้อมูลการสอบล่าสุดที่เว็บไซต์ทางการ <ExternalLink className="h-3 w-3" />

@@ -49,11 +49,27 @@ end $$;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000b', false);
 set role authenticated;
 select pg_temp.expect_error('select * from public.game_questions', 'permission denied');
-update public.profiles set display_name = 'x' where id = '00000000-0000-0000-0000-00000000000a'; -- RLS: matches 0 rows
+select pg_temp.expect_error($$update public.profiles set display_name = 'x' where id = '00000000-0000-0000-0000-00000000000a'$$, 'permission denied');
 reset role;
 do $$ begin
   assert (select display_name from public.profiles where id = '00000000-0000-0000-0000-00000000000a') = 'Alice', 'cannot rename others';
 end $$;
+
+-- --------------------------------------------------------------- name#tag handles
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000000c1', 'h1@handles.invalid', '{"handle":"สมชาย#1234","display_name":"สมชาย#1234"}');
+do $$ begin
+  assert (select handle from public.profiles where id = '00000000-0000-0000-0000-0000000000c1') = 'สมชาย#1234', 'handle stored on profile';
+  assert (select display_name from public.profiles where id = '00000000-0000-0000-0000-0000000000c1') = 'สมชาย#1234', 'display name is the handle';
+end $$;
+select pg_temp.expect_error($$insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000c2', 'h2@handles.invalid', '{"handle":"สมชาย#1234"}')$$, 'duplicate key');
+select pg_temp.expect_error($$insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000c3', 'h3@handles.invalid', '{"handle":"no-tag"}')$$, 'profiles_handle_format');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false);
+set role authenticated;
+select pg_temp.expect_error($$update public.profiles set display_name = 'Alice' where id = '00000000-0000-0000-0000-0000000000c1'$$, 'permission denied');
+select pg_temp.expect_error($$update public.profiles set handle = 'Alice#1' where id = '00000000-0000-0000-0000-0000000000c1'$$, 'permission denied');
+reset role;
+delete from auth.users where id = '00000000-0000-0000-0000-0000000000c1';
 
 -- --------------------------------------------------------------- room lifecycle
 create temp table t (k text primary key, v text);

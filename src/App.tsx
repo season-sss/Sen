@@ -18,13 +18,16 @@ const FlashcardStudy = lazy(() => import('./pages/FlashcardStudy'));
 const Translator = lazy(() => import('./pages/Translator'));
 const Practice = lazy(() => import('./pages/Practice'));
 const Topik = lazy(() => import('./pages/Topik'));
+const RealExam = lazy(() => import('./pages/RealExam'));
 const Games = lazy(() => import('./pages/Games'));
 const GamePlay = lazy(() => import('./pages/GamePlay'));
 const OnlineGame = lazy(() => import('./pages/OnlineGame'));
+const LyricsGame = lazy(() => import('./pages/LyricsGame'));
 const Planner = lazy(() => import('./pages/Planner'));
 const Notes = lazy(() => import('./pages/Notes'));
 const Progress = lazy(() => import('./pages/Progress'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Account = lazy(() => import('./pages/Account'));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -81,13 +84,16 @@ export default function App() {
             <Route path="/translator" element={<Translator />} />
             <Route path="/practice" element={<Practice />} />
             <Route path="/topik" element={<Topik />} />
+            <Route path="/topik/real/:examId" element={<RealExam />} />
             <Route path="/games" element={<Games />} />
             <Route path="/games/play/:gameId" element={<GamePlay />} />
             <Route path="/games/online" element={<OnlineGame />} />
+            <Route path="/games/lyrics" element={<LyricsGame />} />
             <Route path="/planner" element={<Planner />} />
             <Route path="/notes" element={<Notes />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/account" element={<Account />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

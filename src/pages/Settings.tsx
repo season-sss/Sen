@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Download, Upload, RotateCcw, Cloud, CloudOff, LogOut, CheckCircle2, XCircle, Volume2, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Download, Upload, RotateCcw, Cloud, CheckCircle2, XCircle, Volume2, RefreshCw, UserRound } from 'lucide-react';
 import { PageHeader, Card, CardHeader } from '@/components/ui/Card';
 import { Segmented, Switch } from '@/components/ui/Tabs';
 import { ConfirmDialog } from '@/components/ui/Modal';
@@ -7,12 +8,8 @@ import { Notice } from '@/components/ui/States';
 import { LevelBadge } from '@/components/ui/Badge';
 import { toast } from '@/components/ui/Toast';
 import { useSettings, type ThaiReadingPref, type ThemePref } from '@/store/settings';
-import { useProgress } from '@/store/progress';
-import { useFlashcards } from '@/store/flashcards';
-import { useNotes } from '@/store/notes';
-import { usePlanner } from '@/store/planner';
-import { useExams, useGameHistory, useTranslatorHistory } from '@/store/history';
-import { signIn, signOut, signUp, updateDisplayName, useAuth } from '@/lib/backend/auth';
+import { STORE_KEYS as KEYS, rehydrateAllStores } from '@/store/registry';
+import { sessionHandle, useAccount } from '@/lib/account/accounts';
 import { syncNow, useSync } from '@/lib/backend/sync';
 import { backendConfigured } from '@/lib/backend/client';
 import { isRemoteAvailable } from '@/lib/translator';
@@ -27,8 +24,6 @@ import { TOPIK2_ALL, TOPIK2_WRITING } from '@/data/topik/topik2';
 import { TRACK3_QUESTIONS } from '@/data/topik/track3';
 import type { Level } from '@/data/types';
 
-const STORES = [useProgress, useFlashcards, useNotes, usePlanner, useExams, useGameHistory, useTranslatorHistory, useSettings];
-const KEYS = ['haneul:progress', 'haneul:flashcards', 'haneul:notes', 'haneul:planner', 'haneul:exams', 'haneul:games', 'haneul:translator', 'haneul:settings'];
 
 function Status({ ok, label, detail }: { ok: boolean; label: string; detail: string }) {
   return (
@@ -43,106 +38,38 @@ function Status({ ok, label, detail }: { ok: boolean; label: string; detail: str
 }
 
 function AccountCard() {
-  const { user, displayName, configured } = useAuth();
+  const session = useAccount((st) => st.session);
   const sync = useSync();
-  const [mode, setMode] = useState<'in' | 'up'>('in');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  if (!configured)
-    return (
-      <Card className="card-pad">
-        <CardHeader title="บัญชีผู้ใช้" icon={<CloudOff className="h-5 w-5" />} subtitle="Local-first mode" />
-        <p className="text-sm text-muted">
-          ตอนนี้ข้อมูลทั้งหมด (ความคืบหน้า Flashcards Notes แผนการเรียน) ถูกเก็บในเบราว์เซอร์นี้เท่านั้น ระบบบัญชี การซิงก์ข้ามอุปกรณ์ และเกมออนไลน์จะใช้งานได้เมื่อผู้ดูแลตั้งค่า Supabase (ดู <code>docs/BACKEND_SETUP.md</code>)
-        </p>
-        <p className="mt-2 text-sm text-muted">แนะนำให้ Export ข้อมูลสำรองเป็นระยะ ด้านล่าง</p>
-      </Card>
-    );
-
-  if (user)
-    return (
-      <Card className="card-pad">
-        <CardHeader title="บัญชีผู้ใช้" icon={<Cloud className="h-5 w-5" />} subtitle={user.email ?? ''} />
-        <form
-          className="flex gap-2"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await updateDisplayName(name.trim());
-              toast.success('อัปเดตชื่อแล้ว');
-            } catch (err) {
-              toast.error((err as Error).message);
-            }
-          }}
-        >
-          <input className="input" placeholder={displayName ?? 'ชื่อที่แสดงในเกมออนไลน์'} value={name} onChange={(e) => setName(e.target.value)} aria-label="ชื่อที่แสดง" maxLength={30} />
-          <button className="btn-secondary" disabled={!name.trim()}>
-            บันทึก
-          </button>
-        </form>
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+  return (
+    <Card className="card-pad">
+      <CardHeader title="บัญชีผู้ใช้" icon={session?.kind === 'cloud' ? <Cloud className="h-5 w-5" /> : <UserRound className="h-5 w-5" />} subtitle={session ? sessionHandle(session) : 'ผู้เยี่ยมชม (ยังไม่ได้เข้าสู่ระบบ)'} />
+      <p className="text-sm text-muted">
+        {session
+          ? session.kind === 'cloud'
+            ? 'ข้อมูลของบัญชีนี้ซิงก์ข้ามอุปกรณ์อัตโนมัติ'
+            : 'ข้อมูลของบัญชีนี้เก็บแยกไว้ในเบราว์เซอร์นี้ — ใช้ Export ด้านล่างเพื่อย้ายไปเครื่องอื่น'
+          : 'เข้าสู่ระบบด้วย ชื่อ#แท็ก และ PIN เพื่อให้ข้อมูลที่ฝึกถูกจำไว้ในบัญชีของคุณ และแยกจากคนอื่นที่ใช้เครื่องเดียวกัน'}
+      </p>
+      {session?.kind === 'cloud' && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
           <span className="text-muted">
             ซิงก์: {sync.status === 'syncing' ? 'กำลังซิงก์…' : sync.status === 'error' ? `ผิดพลาด (${sync.error})` : sync.lastSyncedAt ? `ล่าสุด ${new Date(sync.lastSyncedAt).toLocaleTimeString('th-TH')}` : 'ยังไม่ได้ซิงก์'}
           </span>
           <button className="btn-secondary btn-sm" onClick={() => void syncNow()} disabled={sync.status === 'syncing'}>
             <RefreshCw className="h-4 w-4" /> ซิงก์ตอนนี้
           </button>
-          <button
-            className="btn-ghost btn-sm"
-            onClick={async () => {
-              await signOut();
-              toast.info('ออกจากระบบแล้ว — ข้อมูลในเครื่องยังอยู่');
-            }}
-          >
-            <LogOut className="h-4 w-4" /> ออกจากระบบ
-          </button>
         </div>
-      </Card>
-    );
-
-  return (
-    <Card className="card-pad">
-      <CardHeader title={mode === 'in' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'} subtitle="ซิงก์ความคืบหน้าข้ามอุปกรณ์ และเล่นเกมออนไลน์กับเพื่อน" icon={<Cloud className="h-5 w-5" />} />
-      <form
-        className="space-y-3"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          try {
-            if (mode === 'in') {
-              await signIn(email, password);
-              toast.success('เข้าสู่ระบบแล้ว — กำลังซิงก์ข้อมูล');
-            } else {
-              const r = await signUp(email, password, name.trim() || email.split('@')[0]);
-              toast.success(r.needsConfirmation ? 'สมัครแล้ว — โปรดยืนยันอีเมลก่อนเข้าสู่ระบบ' : 'สมัครและเข้าสู่ระบบแล้ว');
-            }
-          } catch (err) {
-            toast.error((err as Error).message);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        {mode === 'up' && <input className="input" placeholder="ชื่อที่แสดง" value={name} onChange={(e) => setName(e.target.value)} aria-label="ชื่อที่แสดง" maxLength={30} />}
-        <input className="input" type="email" autoComplete="email" placeholder="อีเมล" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="อีเมล" required />
-        <input className="input" type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} placeholder="รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} aria-label="รหัสผ่าน" required />
-        <button className="btn-primary w-full" disabled={busy}>
-          {mode === 'in' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
-        </button>
-      </form>
-      <button className="btn-ghost btn-sm mt-2 w-full" onClick={() => setMode(mode === 'in' ? 'up' : 'in')}>
-        {mode === 'in' ? 'ยังไม่มีบัญชี? สมัครสมาชิก' : 'มีบัญชีแล้ว? เข้าสู่ระบบ'}
-      </button>
-      <p className="mt-2 text-xs text-muted">เมื่อเข้าสู่ระบบ ข้อมูลในเครื่องที่ใหม่กว่าจะถูกอัปโหลด และข้อมูลบนคลาวด์ที่ใหม่กว่าจะถูกดาวน์โหลด (เปรียบเทียบแยกตามหมวด)</p>
+      )}
+      <Link to="/account" className="btn-secondary mt-4">
+        {session ? 'จัดการบัญชี / ออกจากระบบ' : 'เข้าสู่ระบบ / สร้างบัญชี'}
+      </Link>
     </Card>
   );
 }
 
 export default function Settings() {
   const s = useSettings();
+  const handle = useAccount((st) => sessionHandle(st.session));
   const tts = useTtsAvailable();
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -158,7 +85,7 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title="โปรไฟล์และตั้งค่า" subtitle="บัญชี การแสดงผล การเรียน และข้อมูลของคุณ" />
+      <PageHeader title="ตั้งค่า" subtitle="บัญชี การแสดงผล การเรียน และข้อมูลของคุณ" />
       <div className="grid gap-4 lg:grid-cols-2">
         <AccountCard />
 
@@ -243,7 +170,8 @@ export default function Settings() {
           <CardHeader title="สถานะระบบ" subtitle="แสดงตามความสามารถที่ใช้งานได้จริงบนอุปกรณ์และการตั้งค่านี้" />
           <ul className="divide-y divide-border">
             <Status ok label="บันทึกข้อมูลในเครื่อง (Local-first)" detail="ความคืบหน้า Flashcards Notes Planner และประวัติ บันทึกในเบราว์เซอร์นี้" />
-            <Status ok={backendConfigured} label="Backend / บัญชี / ซิงก์ (Supabase)" detail={backendConfigured ? 'ตั้งค่าแล้ว' : 'ยังไม่ได้ตั้งค่า — ต้องกำหนด VITE_SUPABASE_URL และ VITE_SUPABASE_ANON_KEY'} />
+            <Status ok label="บัญชีในเครื่อง (ชื่อ#แท็ก + PIN)" detail="หลายคนใช้เครื่องเดียวกันได้ ข้อมูลแยกตามบัญชี" />
+            <Status ok={backendConfigured} label="บัญชีออนไลน์ / ซิงก์ข้ามอุปกรณ์ (Supabase)" detail={backendConfigured ? 'ตั้งค่าแล้ว' : 'ยังไม่ได้ตั้งค่า — ต้องกำหนด VITE_SUPABASE_URL และ VITE_SUPABASE_ANON_KEY'} />
             <Status ok={backendConfigured} label="เกมออนไลน์หลายผู้เล่น (Realtime)" detail={backendConfigured ? 'พร้อมใช้งานเมื่อเข้าสู่ระบบ' : 'ต้องตั้งค่า Backend ก่อน · โหมดคนเดียวและเครื่องเดียวใช้ได้เสมอ'} />
             <Status ok={tts} label="เสียงอ่านภาษาเกาหลี (Text-to-Speech)" detail={tts ? 'พบเสียงภาษาเกาหลีในอุปกรณ์' : 'ไม่พบเสียงภาษาเกาหลี — ติดตั้งภาษาเกาหลีในระบบปฏิบัติการเพื่อใช้ฟีเจอร์ฟัง'} />
             <Status ok={isRemoteAvailable()} label="แปลทั้งประโยคผ่าน Translation backend" detail={isRemoteAvailable() ? 'ตั้งค่าแล้ว' : 'ไม่ได้ตั้งค่า — ใช้ Reading Assistant แบบพจนานุกรมของ HANEUL'} />
@@ -276,7 +204,7 @@ export default function Settings() {
                 const json = JSON.parse(await f.text());
                 if (json.format !== 'haneul-backup' || typeof json.data !== 'object') throw new Error('ไม่ใช่ไฟล์สำรองของ HANEUL');
                 for (const k of KEYS) if (json.data[k]) safeStorage.setItem(k, JSON.stringify(json.data[k]));
-                await Promise.all(STORES.map((st) => st.persist.rehydrate()));
+                await rehydrateAllStores();
                 toast.success('กู้คืนข้อมูลแล้ว');
               } catch (err) {
                 toast.error((err as Error).message);
@@ -285,7 +213,7 @@ export default function Settings() {
               }
             }}
           />
-          <Notice className="mt-3">ข้อมูลทั้งหมดเก็บภายใต้คีย์ <code>{STORE_PREFIX}*</code> ในเบราว์เซอร์นี้ การล้างข้อมูลเบราว์เซอร์จะทำให้ข้อมูลหาย หากไม่ได้ Export หรือซิงก์ไว้</Notice>
+          <Notice className="mt-3">Export / Import / ล้างข้อมูล ทำกับ{handle ? `บัญชี ${handle}` : 'ข้อมูลผู้เยี่ยมชม'}เท่านั้น · ข้อมูลเก็บภายใต้คีย์ <code>{STORE_PREFIX}*</code> ในเบราว์เซอร์นี้ การล้างข้อมูลเบราว์เซอร์จะทำให้ข้อมูลหาย หากไม่ได้ Export หรือซิงก์ไว้</Notice>
         </Card>
 
         <Card className="card-pad lg:col-span-2">
@@ -311,8 +239,8 @@ export default function Settings() {
       <ConfirmDialog
         open={confirmReset}
         onClose={() => setConfirmReset(false)}
-        title="ล้างข้อมูลทั้งหมดในเครื่อง?"
-        message="ความคืบหน้า Flashcards Notes แผนการเรียน และประวัติทั้งหมดในเบราว์เซอร์นี้จะถูกลบ (ข้อมูลบนคลาวด์ไม่ถูกลบ)"
+        title={`ล้างข้อมูลของ${handle ? ` ${handle}` : 'ผู้เยี่ยมชม'}?`}
+        message="ความคืบหน้า Flashcards Notes แผนการเรียน เพลง และประวัติทั้งหมดของบัญชีนี้ในเบราว์เซอร์นี้จะถูกลบ (บัญชีอื่นและข้อมูลบนคลาวด์ไม่ถูกลบ)"
         danger
         confirmLabel="ล้างข้อมูล"
         onConfirm={() => {

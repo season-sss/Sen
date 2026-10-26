@@ -15,7 +15,7 @@ import { levelProgress, lessonsWithStatus, nextLesson } from '@/lib/learning';
 import { buildQueue } from '@/lib/srs/scheduler';
 import { addDays, today, WEEKDAY_TH, weekday } from '@/lib/util/date';
 import { planStats } from '@/lib/planner/planner';
-import { useAuth } from '@/lib/backend/auth';
+import { useAccount } from '@/lib/account/accounts';
 
 const LEVEL_COLORS: Record<string, string> = {
   L0: 'var(--lv-L0)',
@@ -31,7 +31,7 @@ export default function Dashboard() {
   const { currentLevel, displayName, dailyGoalMinutes, newCardsPerDay } = useSettings();
   const { cards, newIntroduced } = useFlashcards();
   const plan = usePlanner((s) => s.plan);
-  const authName = useAuth((s) => s.displayName);
+  const accountName = useAccount((s) => s.session?.name);
   const t = today();
 
   const next = nextLesson(lessons, currentLevel);
@@ -51,7 +51,7 @@ export default function Dashboard() {
   const maxWeek = Math.max(dailyGoalMinutes, ...week.map((d) => activity[d]?.minutes ?? 0));
   const stats = plan ? planStats(plan, t) : null;
   const mistakeCount = Object.keys(mistakes).length;
-  const name = authName || displayName;
+  const name = displayName || accountName;
 
   return (
     <div className="space-y-5">

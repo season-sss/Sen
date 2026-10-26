@@ -16,7 +16,8 @@ scripts/test-db.sh   # Supabase migration + RLS + multiplayer tests on a local P
 ```
 
 ไม่ต้องตั้งค่าอะไรเพิ่มก็ใช้งานได้ในโหมด **Local-first** (ข้อมูลเก็บในเบราว์เซอร์)
-ระบบบัญชี ซิงก์ข้ามอุปกรณ์ และเกมออนไลน์ต้องตั้งค่า Supabase — ดู [docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md)
+และสร้าง **บัญชีในเครื่อง** ด้วย `ชื่อ#แท็ก` + PIN 4–6 หลักได้ทันที (หลายคนใช้เครื่องเดียวกันได้ ข้อมูลแยกกัน)
+บัญชีออนไลน์ ซิงก์ข้ามอุปกรณ์ และเกมออนไลน์ต้องตั้งค่า Supabase — ดู [docs/BACKEND_SETUP.md](docs/BACKEND_SETUP.md)
 
 ## เนื้อหา
 
@@ -25,7 +26,9 @@ scripts/test-db.sh   # Supabase migration + RLS + multiplayer tests on a local P
 | Curriculum Map | 6 ระดับ (Level 0, A1, A2, B1, B2, Advanced) · 191 บทเรียน | Level → Module → Unit → Lesson → Topic → Exercise → Assessment |
 | คำศัพท์ | ~1,060 คำ (A1–B2) | ความหมายไทย ประเภทคำ ประโยคตัวอย่างพร้อมคำแปล |
 | ไวยากรณ์ | 94 หัวข้อ | วิธีสร้าง การใช้ ตัวอย่าง ข้อผิดพลาดที่พบบ่อย แบบฝึกหัดที่ตรวจได้ |
-| TOPIK | ข้อสอบเขียนขึ้นใหม่รูปแบบ TOPIK I / II + TOPIK III Study Track | ไม่ใช่ข้อสอบจริงจากการสอบที่ผ่านมา |
+| TOPIK (เขียนใหม่) | ข้อสอบเขียนขึ้นใหม่รูปแบบ TOPIK I / II + TOPIK III Study Track | ไม่ใช่ข้อสอบจริง |
+| TOPIK (ข้อสอบจริง) | TOPIK I ครั้งที่ 96 · 70 ข้อ พร้อมเฉลย คะแนนรายข้อ คำแปลและคำอธิบายภาษาไทย | ถอดจากเอกสารข้อสอบที่ได้รับ (ลิขสิทธิ์ NIIED) · `src/data/topik/real/` |
+| เกมแปลเนื้อเพลง | ผู้ใช้เพิ่มเพลงเอง (เนื้อเพลงเกาหลีล้วน + คำแปลไทย) | มีเพียงเพลงตัวอย่างที่แต่งขึ้นเอง ไม่มีเนื้อเพลงจริงในโค้ด |
 
 > เรื่อง "1 แสนคำ": คนเกาหลีใช้คำในชีวิตประจำวันประมาณ 5,000–10,000 คำ คลังนี้ครอบคลุมแกนหลักระดับ A1–B2
 > และออกแบบให้เพิ่มคำได้ในไฟล์ `src/data/vocabulary/*.ts` (มีชุดทดสอบตรวจความถูกต้องของข้อมูลให้อัตโนมัติ)
@@ -46,6 +49,9 @@ src/
   lib/planner/       สร้างตารางเรียนตามเวลาว่าง/วันพัก/ความยาก เลื่อนแผน ย้ายรายการ
   lib/translator/    Reading Assistant แบบพจนานุกรม + interface สำหรับ translation backend (ไม่บังคับ)
   lib/games/         10 เกม สร้างคำถามแบบ seed ได้ และสูตรคะแนน (ซ้ำกับฝั่งเซิร์ฟเวอร์)
+  lib/account/       บัญชี ชื่อ#แท็ก + PIN (PBKDF2, ล็อกเมื่อผิดซ้ำ) · แยก namespace ข้อมูลต่อบัญชี
+  lib/topik/         ให้คะแนนข้อสอบจริงตามน้ำหนักข้อ
+  lib/lyrics/        เกมแปลเนื้อเพลง: ตรวจเนื้อเพลงเกาหลีล้วน แปลงข้อความที่วาง สร้างตัวเลือก
   lib/backend/       Supabase client, auth, cloud sync, multiplayer service
   data/              หลักสูตร คำศัพท์ ไวยากรณ์ ฮันกึล บทสนทนา บทอ่าน คลังข้อสอบ
   store/             Local-first stores (progress, flashcards, notes, planner, history, settings)
@@ -59,7 +65,7 @@ supabase/
 
 ## การตรวจสอบคุณภาพ
 
-- `npm test` — 370+ tests: conjugation engine (ค่าที่คาดหวังเขียนด้วยมือ), pronunciation/romanization,
+- `npm test` — 400+ tests: conjugation engine (ค่าที่คาดหวังเขียนด้วยมือ), pronunciation/romanization,
   integrity ของคำศัพท์/ไวยากรณ์/หลักสูตร (ทุกบทเรียนอ้างอิงเนื้อหาที่มีอยู่จริง), คำกริยาทุกคำในคลังผันได้แบบ "ตรวจสอบแล้ว",
   quiz/SRS/planner/translator/games
 - `scripts/test-db.sh` — รัน migration + seed บน PostgreSQL จริง แล้วทดสอบ RLS (ผู้ใช้อ่าน/แก้ข้อมูลคนอื่นไม่ได้),

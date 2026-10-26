@@ -8,25 +8,14 @@
 import { create } from 'zustand';
 import { supabase } from './client';
 import { useAuth } from './auth';
-import { onStoreWrite, readMeta, safeStorage, setMeta, withoutTouch } from '@/store/persist';
-import { useProgress } from '@/store/progress';
-import { useFlashcards } from '@/store/flashcards';
-import { useNotes } from '@/store/notes';
-import { usePlanner } from '@/store/planner';
-import { useExams, useGameHistory, useTranslatorHistory } from '@/store/history';
-import { useSettings } from '@/store/settings';
+import { getNamespace, onStoreWrite, readMeta, safeStorage, setMeta, withoutTouch } from '@/store/persist';
+import { PERSISTED_STORES as STORES, type StoreKey } from '@/store/registry';
 
-const STORES = {
-  'haneul:progress': useProgress,
-  'haneul:flashcards': useFlashcards,
-  'haneul:notes': useNotes,
-  'haneul:planner': usePlanner,
-  'haneul:exams': useExams,
-  'haneul:games': useGameHistory,
-  'haneul:translator': useTranslatorHistory,
-  'haneul:settings': useSettings,
-} as const;
-type StoreKey = keyof typeof STORES;
+/** Only sync while the local data namespace belongs to the signed-in cloud user. */
+function syncUser() {
+  const user = useAuth.getState().user;
+  return user && getNamespace() === `c_${user.id}` ? user : null;
+}
 
 interface SyncState {
   status: 'off' | 'idle' | 'syncing' | 'error';
@@ -40,7 +29,7 @@ const dirty = new Set<StoreKey>();
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 async function push(keys: StoreKey[]) {
-  const user = useAuth.getState().user;
+  const user = syncUser();
   if (!supabase || !user || !keys.length) return;
   useSync.setState({ status: 'syncing' });
   const meta = readMeta();
@@ -56,7 +45,7 @@ async function push(keys: StoreKey[]) {
 }
 
 function schedulePush(key: string) {
-  if (!(key in STORES) || !useAuth.getState().user) return;
+  if (!(key in STORES) || !syncUser()) return;
   dirty.add(key as StoreKey);
   if (timer) clearTimeout(timer);
   timer = setTimeout(() => {
@@ -68,7 +57,7 @@ function schedulePush(key: string) {
 
 /** Pull remote rows; newer remote copies replace local ones, newer local copies are pushed. */
 export async function syncNow() {
-  const user = useAuth.getState().user;
+  const user = syncUser();
   if (!supabase || !user) return;
   useSync.setState({ status: 'syncing', error: null });
   const { data, error } = await supabase.from('user_data').select('key, value, updated_at').eq('user_id', user.id);
@@ -95,6 +84,15 @@ export async function syncNow() {
   }
   await push(toPush);
   useSync.setState({ status: 'idle', lastSyncedAt: Date.now() });
+}
+
+/** Push pending local changes now (before signing out). */
+export async function flushSync() {
+  if (timer) clearTimeout(timer);
+  timer = null;
+  const keys = [...dirty];
+  dirty.clear();
+  await push(keys);
 }
 
 let started = false;

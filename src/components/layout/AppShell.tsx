@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Map,
@@ -19,13 +19,17 @@ import {
   Flame,
   Cloud,
   HardDrive,
+  UserRound,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Modal } from '@/components/ui/Modal';
 import { useProgress } from '@/store/progress';
 import { computeStreak } from '@/lib/planner/planner';
 import { today } from '@/lib/util/date';
-import { useAuth } from '@/lib/backend/auth';
+import { logout, useAccount } from '@/lib/account/accounts';
+import { toast } from '@/components/ui/Toast';
 
 export interface NavItem {
   to: string;
@@ -65,7 +69,8 @@ export const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: 'ติดตามผล',
     items: [
       { to: '/progress', label: 'ความก้าวหน้า', icon: LineChart },
-      { to: '/settings', label: 'โปรไฟล์และตั้งค่า', icon: Settings },
+      { to: '/account', label: 'บัญชีผู้ใช้', icon: UserRound },
+      { to: '/settings', label: 'ตั้งค่า', icon: Settings },
     ],
   },
 ];
@@ -101,12 +106,58 @@ function useStreak() {
   return computeStreak(days, today());
 }
 
-function AccountChip() {
-  const { user, configured } = useAuth();
+function AccountChip({ onNavigate }: { onNavigate?: () => void }) {
+  const session = useAccount((s) => s.session);
+  const navigate = useNavigate();
+  if (!session)
+    return (
+      <NavLink to="/account" onClick={onNavigate} className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2 text-sm font-medium text-ink hover:bg-surface-2">
+        <LogIn className="h-4 w-4 text-lavender" />
+        <span className="min-w-0 flex-1 truncate">เข้าสู่ระบบ / สร้างบัญชี</span>
+        <span className="text-[11px] text-muted">ผู้เยี่ยมชม</span>
+      </NavLink>
+    );
   return (
-    <NavLink to="/settings" className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-muted hover:bg-surface-2">
-      {user ? <Cloud className="h-4 w-4 text-success" /> : <HardDrive className="h-4 w-4" />}
-      <span className="truncate">{user ? user.email : configured ? 'ยังไม่ได้เข้าสู่ระบบ (เก็บข้อมูลในเครื่อง)' : 'Local mode · เก็บข้อมูลในเครื่องนี้'}</span>
+    <div className="flex items-center gap-1 rounded-xl px-1 py-1 hover:bg-surface-2">
+      <NavLink to="/account" onClick={onNavigate} className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky to-lavender text-sm font-bold text-white">{[...session.name][0]?.toUpperCase()}</span>
+        <span className="min-w-0 leading-tight">
+          <span className="block truncate text-sm font-semibold">
+            {session.name}
+            <span className="text-lavender">#{session.tag}</span>
+          </span>
+          <span className="flex items-center gap-1 text-[11px] text-muted">
+            {session.kind === 'cloud' ? <Cloud className="h-3 w-3 text-success" /> : <HardDrive className="h-3 w-3" />}
+            {session.kind === 'cloud' ? 'บัญชีออนไลน์' : 'บัญชีในเครื่องนี้'}
+          </span>
+        </span>
+      </NavLink>
+      <button
+        className="btn-ghost shrink-0 p-2"
+        title="ออกจากระบบ"
+        aria-label="ออกจากระบบ"
+        onClick={async () => {
+          await logout();
+          onNavigate?.();
+          toast.info('ออกจากระบบแล้ว');
+          navigate('/account');
+        }}
+      >
+        <LogOut className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function MobileAccountButton() {
+  const session = useAccount((s) => s.session);
+  return (
+    <NavLink to="/account" className="grid h-8 w-8 place-items-center rounded-full bg-surface shadow-card" aria-label={session ? `บัญชี ${session.name}#${session.tag}` : 'เข้าสู่ระบบ'}>
+      {session ? (
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-sky to-lavender text-sm font-bold text-white">{[...session.name][0]?.toUpperCase()}</span>
+      ) : (
+        <UserRound className="h-4 w-4 text-muted" />
+      )}
     </NavLink>
   );
 }
@@ -161,9 +212,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-bg/85 px-4 py-2.5 backdrop-blur lg:hidden" style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))' }}>
         <Logo />
-        <div className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-sm shadow-card" aria-label={`เรียนต่อเนื่อง ${streak} วัน`}>
-          <Flame className={cn('h-4 w-4', streak ? 'text-orange-500' : 'text-muted')} />
-          <span className="font-semibold">{streak}</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-sm shadow-card" aria-label={`เรียนต่อเนื่อง ${streak} วัน`}>
+            <Flame className={cn('h-4 w-4', streak ? 'text-orange-500' : 'text-muted')} />
+            <span className="font-semibold">{streak}</span>
+          </div>
+          <MobileAccountButton />
         </div>
       </header>
 
@@ -217,7 +271,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           ))}
-          <AccountChip />
+          <AccountChip onNavigate={() => setMoreOpen(false)} />
         </div>
       </Modal>
     </div>

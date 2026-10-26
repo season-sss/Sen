@@ -14,10 +14,18 @@
 Migration เพิ่มตาราง `game_rooms`, `room_players`, `room_invites` เข้า publication `supabase_realtime` ให้อัตโนมัติ
 ตรวจใน Dashboard › Database › Replication ว่าเปิดอยู่
 
-## 2. ตั้งค่า Auth
+## 2. ตั้งค่า Auth (บัญชี ชื่อ#แท็ก + PIN)
 
-- Authentication › Providers › Email: เปิดใช้งาน (จะเปิด "Confirm email" หรือไม่ก็ได้)
+ผู้ใช้สมัครด้วย `ชื่อ#แท็ก` และ PIN 4–6 หลัก แอปแปลง handle เป็นอีเมลภายในแบบ hash
+(`h<sha256>@users.haneul.invalid`) เพื่อใช้กับ Supabase Auth — ไม่มีการส่งอีเมลจริง
+
+- Authentication › Providers › Email: **เปิดใช้งาน** และ **ปิด "Confirm email"** (ไม่มีอีเมลจริงให้ยืนยัน)
 - Authentication › URL Configuration: ใส่ Site URL เป็นโดเมนที่ deploy แอป
+- Authentication › Rate Limits: คงค่า rate limit ของการ sign-in ไว้ และแนะนำเปิด **CAPTCHA** (Attack Protection)
+  เพราะ PIN 4–6 หลักเดาได้ง่ายกว่ารหัสผ่านทั่วไป
+- ถ้า Supabase ไม่รับโดเมน `.invalid` ให้ตั้ง `VITE_HANDLE_EMAIL_DOMAIN` เป็นโดเมนที่คุณเป็นเจ้าของ (ไม่ต้องมีกล่องอีเมล)
+- Migration `20261027000001_handles.sql` เก็บ handle ใน `profiles.handle` (ไม่ซ้ำแบบไม่สนตัวพิมพ์เล็ก/ใหญ่)
+  และยกเลิกสิทธิ์แก้ `display_name` จาก client เพื่อไม่ให้ใครตั้งชื่อปลอมเป็น ชื่อ#แท็ก ของคนอื่น
 
 ## 3. ตั้งค่า environment ของ frontend
 
@@ -36,7 +44,7 @@ anon key เป็นคีย์สาธารณะโดยการออ�
 | ข้อมูล | การป้องกัน |
 |---|---|
 | `user_data` (ซิงก์) | RLS: อ่าน/เขียนได้เฉพาะแถวของตนเอง |
-| `profiles` | อ่านชื่อที่แสดงได้ (ใช้ในห้องเกม) แก้ไขได้เฉพาะของตนเอง |
+| `profiles` | อ่านชื่อที่แสดงได้ (ใช้ในห้องเกม) · ชื่อ = ชื่อ#แท็ก ที่ไม่ซ้ำ และ client แก้ไม่ได้ |
 | `game_questions` | ไม่มี policy ให้ client — คำตอบอ่านจากเบราว์เซอร์ไม่ได้ |
 | `room_questions` | เห็นเฉพาะสมาชิกห้อง และเฉพาะข้อที่ปล่อยแล้ว |
 | คะแนน | คำนวณใน `submit_answer` จากเวลาเซิร์ฟเวอร์ — client เขียนตารางคะแนนโดยตรงไม่ได้ |

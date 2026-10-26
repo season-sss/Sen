@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Users, User, Wifi, WifiOff, Trophy, Headphones } from 'lucide-react';
+import { Users, User, Wifi, WifiOff, Trophy, Headphones, Music2, ChevronRight } from 'lucide-react';
 import { PageHeader, Card, CardHeader } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { Badge } from '@/components/ui/Badge';
@@ -9,6 +9,8 @@ import { useGameHistory } from '@/store/history';
 import { backendConfigured } from '@/lib/backend/client';
 import { useAuth } from '@/lib/backend/auth';
 import { useTtsAvailable } from '@/hooks/useTts';
+import { useLyrics } from '@/store/lyrics';
+import { BUILTIN_SONGS } from '@/data/lyrics/songs';
 import { formatThaiDate, toISODate } from '@/lib/util/date';
 
 export default function Games() {
@@ -16,6 +18,7 @@ export default function Games() {
   const user = useAuth((s) => s.user);
   const tts = useTtsAvailable();
   const recent = [...results].reverse().slice(0, 8);
+  const mySongs = useLyrics((s) => s.songs.length);
 
   return (
     <div>
@@ -35,8 +38,30 @@ export default function Games() {
           โหมดออนไลน์ต้องตั้งค่า Backend (Supabase Realtime) ก่อน — ตอนนี้เล่นได้แบบ <b>คนเดียว</b> และ <b>หลายคนบนเครื่องเดียวกัน</b> (ผลัดกันตอบ)
         </Notice>
       ) : !user ? (
-        <Notice className="mb-5">เข้าสู่ระบบในหน้า "โปรไฟล์และตั้งค่า" เพื่อสร้างหรือเข้าห้องเล่นออนไลน์</Notice>
+        <Notice className="mb-5">
+          <Link to="/account" className="font-semibold text-lavender underline">
+            เข้าสู่ระบบด้วยบัญชีออนไลน์
+          </Link>{' '}
+          เพื่อสร้างหรือเข้าห้องเล่นออนไลน์
+        </Notice>
       ) : null}
+
+      <Link to="/games/lyrics" className="card group mb-4 flex items-center gap-4 overflow-hidden border-lavender/40 bg-gradient-to-br from-lavender-soft via-surface to-sky-soft p-4 transition hover:shadow-lift sm:p-5">
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-lavender to-sky text-white shadow-card">
+          <Music2 className="h-7 w-7" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-lg font-bold">Lyrics Translation</span>
+            <span lang="ko" className="ko text-sm text-muted">
+              가사 번역
+            </span>
+            <Badge tone="lavender">ใหม่</Badge>
+          </div>
+          <p className="text-sm text-muted">อ่านเนื้อเพลงภาษาเกาหลี แล้วเลือกคำแปลที่ถูกจาก 4 ตัวเลือก · เพิ่มเพลงของคุณเองได้ ({BUILTIN_SONGS.length + mySongs} เพลง)</p>
+        </div>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted transition group-hover:translate-x-0.5" />
+      </Link>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES.map((g) => {

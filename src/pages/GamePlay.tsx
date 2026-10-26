@@ -10,6 +10,7 @@ import { Icon } from '@/components/ui/Icon';
 import { useGameHistory } from '@/store/history';
 import { useProgress } from '@/store/progress';
 import { useSettings } from '@/store/settings';
+import { sessionHandle, useAccount } from '@/lib/account/accounts';
 import { useTtsAvailable } from '@/hooks/useTts';
 import { randomSeed } from '@/lib/util/random';
 import { grade } from '@/lib/quiz/grading';
@@ -32,8 +33,9 @@ export default function GamePlay() {
   const def = GAME_BY_ID[gameId as GameId];
   const isLocal = params.get('mode') === 'local';
   const settingsName = useSettings((s) => s.displayName);
+  const accountHandle = useAccount((s) => sessionHandle(s.session));
   const [level, setLevel] = useState<Level>('A1');
-  const [names, setNames] = useState<string[]>(isLocal ? ['ผู้เล่น 1', 'ผู้เล่น 2'] : [settingsName || 'ฉัน']);
+  const [names, setNames] = useState<string[]>(isLocal ? ['ผู้เล่น 1', 'ผู้เล่น 2'] : [accountHandle || settingsName || 'ฉัน']);
   const [phase, setPhase] = useState<Phase>('setup');
   const [seed, setSeed] = useState(randomSeed);
   const [players, setPlayers] = useState<Player[]>([]);

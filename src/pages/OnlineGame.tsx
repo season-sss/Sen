@@ -563,8 +563,8 @@ export default function OnlineGame() {
           title="เข้าสู่ระบบเพื่อเล่นออนไลน์"
           message="ใช้บัญชีเพื่อเข้าห้อง ส่งคำเชิญ และบันทึกผล"
           action={
-            <Link to="/settings" className="btn-primary">
-              เข้าสู่ระบบ / สมัคร
+            <Link to="/account" className="btn-primary">
+              เข้าสู่ระบบ / สร้างบัญชี
             </Link>
           }
         />

@@ -8,8 +8,10 @@ import type { Level } from '@/data/types';
 // ----------------------------------------------------------------- TOPIK attempts
 export interface ExamAttempt {
   id: string;
-  exam: 'TOPIK1' | 'TOPIK2' | 'TRACK3' | 'DRILL';
+  exam: 'TOPIK1' | 'TOPIK2' | 'TRACK3' | 'DRILL' | 'REAL';
   mode: string;
+  /** Real past-paper attempts: exam id, part, official points and the answer sheet */
+  real?: { examId: string; part: 'full' | 'listening' | 'reading'; score: number; max: number; answers: Record<number, number> };
   title: string;
   startedAt: number;
   finishedAt: number;
@@ -48,6 +50,35 @@ export const useExams = create<ExamState>()(
       saveWriting: (w) => set((s) => ({ writings: [...s.writings, { ...w, id: uid('w'), at: Date.now() }].slice(-200) })),
     }),
     { name: 'haneul:exams', storage: jsonStorage, version: 1 },
+  ),
+);
+
+// ----------------------------------------------------------------- Real exam draft (resume after reload)
+export interface RealExamDraft {
+  examId: string;
+  part: 'full' | 'listening' | 'reading';
+  mode: 'exam' | 'practice';
+  only?: number[];
+  startedAt: number;
+  answers: Record<number, number>;
+  flags: number[];
+  index: number;
+}
+
+interface DraftState {
+  draft: RealExamDraft | null;
+  setDraft: (d: RealExamDraft | null) => void;
+  patch: (p: Partial<RealExamDraft>) => void;
+}
+
+export const useExamDraft = create<DraftState>()(
+  persist(
+    (set) => ({
+      draft: null,
+      setDraft: (draft) => set({ draft }),
+      patch: (p) => set((s) => (s.draft ? { draft: { ...s.draft, ...p } } : s)),
+    }),
+    { name: 'haneul:examdraft', storage: jsonStorage, version: 1 },
   ),
 );
 
