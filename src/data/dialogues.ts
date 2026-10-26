@@ -180,6 +180,7 @@ export const DIALOGUES: Dialogue[] = [
     ],
     questions: [
       { q: '준은 왜 바빠요?', options: ['일 때문에', '시험 때문에', '여행 때문에'], answer: 1 },
+      { q: '두 사람은 언제 같이 놀 거예요?', options: ['오늘', '시험이 끝나고', '다음 달'], answer: 1 },
     ],
   },
   {

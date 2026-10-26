@@ -157,6 +157,7 @@ export const GRAMMAR_B2: GrammarPoint[] = [
     ],
     exercises: [
       { type: 'fill', prompt: '노력하다 → ___ 한 꿈을 이룰 수 있어요.', answers: ['노력하는'], explain: 'V + 는 한' },
+      { type: 'choice', prompt: '비가 많이 오지 않는 ___ 경기는 계속됩니다.', options: ['한', '셈', '만큼'], answer: 0, explain: 'ตราบใดที่ → 는 한' },
     ],
   },
   {
@@ -206,6 +207,7 @@ export const GRAMMAR_B2: GrammarPoint[] = [
     ],
     exercises: [
       { type: 'fill', prompt: '잊다 → 약속을 ___ 버렸어요.', answers: ['잊어'], explain: '잊 + 어 버렸어요' },
+      { type: 'choice', prompt: '조심했지만 결국 접시를 깨뜨리___.', options: ['고 말았어요', '고 있어요', '기 마련이에요'], answer: 0, explain: 'ผลที่ไม่ต้องการเกิดในที่สุด → -고 말다' },
     ],
   },
   {
@@ -222,6 +224,7 @@ export const GRAMMAR_B2: GrammarPoint[] = [
     ],
     exercises: [
       { type: 'choice', prompt: '늦잠을 자___ 수업에 늦었어요.', options: ['는 바람에', '더라도', '는 반면에'], answer: 0, explain: 'เหตุไม่คาดคิด → ผลเสีย' },
+      { type: 'fill', prompt: '준비하다 → 시험을 ___ 친구 생일 파티에 못 갔어요.', promptTh: 'มัวแต่เตรียมสอบเลยไปงานวันเกิดเพื่อนไม่ได้', answers: ['준비하느라고', '준비하느라'], explain: 'V + 느라고 (ประธานเดียวกัน)' },
     ],
   },
   {

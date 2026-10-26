@@ -94,6 +94,7 @@ export const POS_LESSONS: PosLesson[] = [
     ],
     quiz: [
       { sentence: '친구를 만나요.', word: '를', answer: '조사', options: ['조사', '부사', '어미'] },
+      { sentence: '학교에서 공부해요.', word: '에서', answer: '조사', options: ['조사', '명사', '동사'] },
     ],
   },
   {
@@ -196,6 +197,9 @@ export const STRUCTURE_LESSONS: StructureLesson[] = [
       { ko: '어디 가요? — 시장에 가요.', th: '(คุณ) ไปไหน — (ฉัน) ไปตลาด' },
       { ko: '배고파요.', th: '(ฉัน) หิว' },
     ],
-    build: [{ th: '(ฉัน) ไปตลาด', tokens: ['시장에', '가요.'] }],
+    build: [
+      { th: '(ฉัน) ไปตลาด', tokens: ['시장에', '가요.'] },
+      { th: '(คุณ) กินข้าวหรือยัง', tokens: ['밥', '먹었어요?'] },
+    ],
   },
 ];

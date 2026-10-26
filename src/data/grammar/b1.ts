@@ -310,6 +310,7 @@ export const GRAMMAR_B1: GrammarPoint[] = [
     ],
     exercises: [
       { type: 'fill', prompt: '춥다 → 밖이 ___ 코트 입으세요.', answers: ['춥잖아요'], explain: 'รากคำ + 잖아요 (ไม่เปลี่ยนรูป ㅂ เพราะ ㅈ ไม่ใช่สระ)' },
+      { type: 'choice', prompt: 'A: 왜 우산을 가져가요? B: 오후에 비가 온다고 했___.', options: ['잖아요', '을까요', '고 싶어요'], answer: 0, explain: 'ย้ำสิ่งที่ทั้งคู่รู้ (พยากรณ์อากาศ) → 잖아요' },
     ],
   },
   {
