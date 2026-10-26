@@ -115,8 +115,10 @@ export function generateGameQuestions(id: GameId, opts: GenerateOptions = {}): G
   switch (id) {
     case 'vocab-race':
       return sample(pool.filter((v) => !v.ko.includes(' ')), count, rng).map((v, i) => vocabQuestion(v, i % 2 ? 'th-ko' : 'ko-th', rng, pool) as McqQuestion);
-    case 'grammar-battle':
-      return sample([...grammarPool(maxLevel), ...particleQuestions(rng, 10)], count, rng);
+    case 'grammar-battle': {
+      const gp = grammarPool(maxLevel);
+      return sample([...gp, ...particleQuestions(rng, Math.max(10, count - gp.length))], count, rng);
+    }
     case 'sentence-builder':
       return sample(orderPool(maxLevel, rng), count, rng);
     case 'translation-duel':
@@ -141,9 +143,9 @@ export function generateGameQuestions(id: GameId, opts: GenerateOptions = {}): G
     case 'quiz-show':
     case 'boss-battle': {
       const mixed: GameQuestion[] = [
-        ...sample(pool.filter((v) => !v.ko.includes(' ')), 6, rng).map((v) => vocabQuestion(v, 'ko-th', rng, pool) as McqQuestion),
-        ...sample(grammarPool(maxLevel), 5, rng),
-        ...sample(pool, 4, rng).map((v) => translationQuestion(v, rng, pool, 'ko-th')),
+        ...sample(pool.filter((v) => !v.ko.includes(' ')), Math.ceil(count * 0.4), rng).map((v) => vocabQuestion(v, 'ko-th', rng, pool) as McqQuestion),
+        ...sample(grammarPool(maxLevel), Math.ceil(count * 0.35), rng),
+        ...sample(pool, Math.ceil(count * 0.3), rng).map((v) => translationQuestion(v, rng, pool, 'ko-th')),
       ];
       return shuffle(mixed, rng).slice(0, count);
     }

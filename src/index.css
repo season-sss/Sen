@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* HANEUL design tokens — RGB channels so Tailwind can apply opacity */
+:root {
+  --bg: 250 249 246;
+  --surface: 255 255 255;
+  --surface-2: 244 243 249;
+  --border: 229 227 237;
+  --ink: 27 34 64;
+  --muted: 104 110 136;
+  --navy: 30 42 84;
+  --lavender: 124 111 214;
+  --lavender-soft: 238 235 252;
+  --sky: 62 160 222;
+  --sky-soft: 228 242 252;
+  --success: 26 150 100;
+  --warning: 206 132 20;
+  --danger: 214 66 80;
+  --shadow: 30 42 84;
+  /* Level series colors — validated categorical palette (dataviz validator, light surface) */
+  --lv-L0: #2a78d6;
+  --lv-A1: #eb6834;
+  --lv-A2: #1baf7a;
+  --lv-B1: #eda100;
+  --lv-B2: #e87ba4;
+  --lv-ADV: #6250d6;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: 14 18 32;
+  --surface: 22 28 46;
+  --surface-2: 30 37 60;
+  --border: 46 54 82;
+  --ink: 232 234 246;
+  --muted: 152 158 186;
+  --navy: 188 200 244;
+  --lavender: 168 156 244;
+  --lavender-soft: 46 42 84;
+  --sky: 110 192 242;
+  --sky-soft: 26 48 72;
+  --success: 64 196 136;
+  --warning: 238 178 66;
+  --danger: 244 108 118;
+  --shadow: 0 0 0;
+  --lv-L0: #3987e5;
+  --lv-A1: #d95926;
+  --lv-A2: #199e70;
+  --lv-B1: #c98500;
+  --lv-B2: #d55181;
+  --lv-ADV: #9085e9;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    min-height: 100dvh;
+  }
+  :lang(ko),
+  .ko {
+    font-family: 'Noto Sans KR', 'IBM Plex Sans Thai', sans-serif;
+    word-break: keep-all;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--lavender));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  /* Grid items may shrink below their content width (prevents truncated text from forcing overflow). */
+  .grid > * {
+    min-width: 0;
+  }
+  ::selection {
+    background: rgb(var(--lavender) / 0.25);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-border bg-surface shadow-card;
+  }
+  .card-pad {
+    @apply p-4 sm:p-5;
+  }
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition
+      active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-navy text-white hover:bg-navy/90 dark:bg-lavender dark:text-bg dark:hover:bg-lavender/90;
+  }
+  .btn-accent {
+    @apply btn bg-lavender text-white hover:bg-lavender/90;
+  }
+  .btn-secondary {
+    @apply btn border border-border bg-surface text-ink hover:bg-surface-2;
+  }
+  .btn-ghost {
+    @apply btn text-ink hover:bg-surface-2;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-danger/90;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted
+      focus:border-lavender focus:outline-none focus:ring-2 focus:ring-lavender/25;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold text-muted;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-ink transition hover:bg-surface-2;
+  }
+  .chip-active {
+    @apply border-lavender bg-lavender-soft text-lavender;
+  }
+  .h1 {
+    @apply text-2xl font-bold tracking-tight text-ink sm:text-3xl;
+  }
+  .h2 {
+    @apply text-lg font-bold text-ink;
+  }
+  .muted {
+    @apply text-muted;
+  }
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-surface-2;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(var(--surface) / 0.6), transparent);
+    animation: shimmer 1.4s infinite;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Flashcard flip */
+.flip {
+  perspective: 1200px;
+}
+.flip-inner {
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

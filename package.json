@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint:content": "vitest run src/data",
-    "db:seed": "node scripts/generate-seed.mjs"
+    "db:seed": "tsx --tsconfig tsconfig.app.json scripts/generate-seed.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.1",

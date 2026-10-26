@@ -19,6 +19,12 @@ describe('games', () => {
         }
       }
   });
+  it('scales to many players (8 players × rounds)', () => {
+    for (const g of GAMES) {
+      if (g.id === 'word-matching') continue;
+      expect(generateGameQuestions(g.id, { maxLevel: 'A1', count: g.rounds * 8, seed: 5 }).length, g.id).toBe(g.rounds * 8);
+    }
+  });
   it('is reproducible from a seed (needed for synchronized rounds)', () => {
     const a = generateGameQuestions('vocab-race', { seed: 99 }).map((q) => q.id);
     const b = generateGameQuestions('vocab-race', { seed: 99 }).map((q) => q.id);
